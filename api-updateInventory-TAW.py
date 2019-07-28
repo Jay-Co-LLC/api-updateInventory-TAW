@@ -1,12 +1,16 @@
 from ftplib import FTP_TLS
 import os
 import csv
+import time
 import json
 import boto3
 
 lambda_client = boto3.client('lambda')
+sqs = boto3.client('sqs')
 
 def lambda_handler(event, context):
+	
+	exec_id = f"{time.time()}".split('.')[0]
 
 	### RETRIEVE FILE FROM TAW ###
 	# Set up connection to FTP server
@@ -55,9 +59,10 @@ def lambda_handler(event, context):
 
 	i = 1
 
+	# only execute the first chunk while testing
 	for eachChunk in chunks:
 		print(f"Invoking lambda for chunk {i} of {numChunks}")
-		lambda_client.invoke(FunctionName='updateInventory', InvocationType='Event', Payload=json.dumps({'chunk' : eachChunk, 'chunkNum' : i}))
+		lambda_client.invoke(FunctionName='updateInventory', InvocationType='Event', Payload=json.dumps({'id' : exec_id, 'chunk' : eachChunk, 'chunkNum' : i}))
 		i = i + 1
 
 	### END INVOKE LAMBDA ONCE FOR EACH CHUNK ###
@@ -67,5 +72,5 @@ def lambda_handler(event, context):
 		'headers' : {
 			'Access-Control-Allow-Origin' : '*'
 		},
-		'body': json.dumps('Function invoked successfully! Processing...')
+		'body': json.dumps({'id' : exec_id, 'numItems' : len(item_list), 'numChunks' : numChunks})
 	}
