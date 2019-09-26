@@ -8,6 +8,18 @@ import boto3
 lambda_client = boto3.client('lambda')
 sqs = boto3.client('sqs')
 
+LINES = [
+	'BIL',
+	'CST',
+	'D/S',
+	'DAY',
+	'EXP',
+	'RAN',
+	'SKY',
+	'TER',
+	'FOX'
+]
+
 def lambda_handler(event, context):
 	
 	exec_id = f"{time.time()}".split('.')[0]
@@ -40,7 +52,7 @@ def lambda_handler(event, context):
 	item_list = []
 	with open('/tmp/inv.txt', newline='') as items:
 		reader = csv.reader(items, delimiter='\t')
-		item_list = [[item[2][:3] + '-' + item[2][3:], item[12]] for item in reader if item[2][:3] in ['BIL', 'EXP', 'FOX', 'RAN']]
+		item_list = [[item[2], item[12]] for item in reader if item[2][:3] in LINES]
 
 	print(f"Items found: {len(item_list)}")
 
